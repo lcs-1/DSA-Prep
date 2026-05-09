@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NitinSeth.AI — Intelligent Knowledge Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0c;--bg-surface:#131316;--bg-elevated:#1a1a1f;--bg-hover:#222228;
+  --accent:#c9a84c;--accent-dim:#a08636;--accent-glow:rgba(201,168,76,.12);
+  --accent-light:#e8d48b;--accent-soft:rgba(201,168,76,.08);
+  --text:#eae6dc;--text-secondary:#9a9488;--text-muted:#5e5a52;
+  --border:#222226;--border-light:#2e2e34;
+  --success:#4ade80;--warning:#fbbf24;--info:#60a5fa;
+  --danger:#f87171;
+  --radius:10px;--radius-lg:16px;--radius-sm:6px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+  --font-display:'Cormorant Garamond',Georgia,serif;
+  --font-body:'DM Sans',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --sidebar-w:260px;
+  --transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+html{font-size:15px;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+a{color:var(--accent);text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;color:inherit;background:inherit;border:none;outline:none}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* ═══ LAYOUT ═══ */
+#app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);height:100vh;background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.main-content{flex:1;overflow:hidden;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;transform:translateY(8px)}
+.view.active{opacity:1;pointer-events:auto;transform:translateY(0)}
+.view-pad{padding:32px 40px}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar-brand{padding:24px 20px 20px;display:flex;align-items:center;gap:12px}
+.brand-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent-dim));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--bg)}
+.brand-text{font-family:var(--font-display);font-size:1.35rem;font-weight:600;color:var(--text);letter-spacing:-.02em}
+.brand-text span{color:var(--accent)}
+.sidebar-section{padding:0 12px;margin-bottom:8px}
+.sidebar-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);padding:16px 12px 8px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-sm);color:var(--text-secondary);font-size:.88rem;font-weight:500;transition:var(--transition);cursor:pointer;position:relative;margin-bottom:2px}
+.nav-item:hover{background:var(--bg-hover);color:var(--text)}
+.nav-item.active{background:var(--accent-glow);color:var(--accent)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--accent);border-radius:0 3px 3px 0}
+.nav-icon{width:20px;height:20px;opacity:.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3a3a4a,#2a2a34);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:var(--text-secondary)}
+.user-name{font-size:.82rem;font-weight:500}
+.user-role{font-size:.68rem;color:var(--text-muted)}
+.btn-login{width:100%;padding:11px 16px;background:var(--accent);color:var(--bg);border-radius:var(--radius-sm);font-size:.85rem;font-weight:600;text-align:center;transition:var(--transition)}
+.btn-login:hover{background:var(--accent-light);transform:translateY(-1px)}
+.btn-logout{font-size:.72rem;color:var(--text-muted);cursor:pointer;margin-top:8px;text-align:center;transition:var(--transition)}
+.btn-logout:hover{color:var(--danger)}
+.hidden{display:none!important}
+
+/* ═══ LOGIN MODAL ═══ */
+.login-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(12px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.login-overlay.show{opacity:1;pointer-events:auto}
+.login-modal{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px;width:420px;max-width:90vw;transform:translateY(20px) scale(.97);transition:transform .35s cubic-bezier(.4,0,.2,1);position:relative}
+.login-overlay.show .login-modal{transform:translateY(0) scale(1)}
+.login-modal h2{font-family:var(--font-display);font-size:1.6rem;font-weight:600;margin-bottom:4px}
+.login-modal .login-sub{color:var(--text-secondary);font-size:.85rem;margin-bottom:28px}
+.login-field{margin-bottom:16px}
+.login-field label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:6px;font-weight:600}
+.login-field input,.login-field select{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.88rem;color:var(--text);transition:border-color .2s}
+.login-field input:focus,.login-field select:focus{border-color:var(--accent-dim)}
+.login-field select{appearance:none;cursor:pointer}
+.login-field select option{background:var(--bg-surface)}
+.login-role-tabs{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:var(--radius-sm);margin-bottom:20px}
+.login-role-tab{flex:1;padding:9px 12px;text-align:center;border-radius:var(--radius-sm);font-size:.8rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:var(--transition)}
+.login-role-tab.active{background:var(--accent-glow);color:var(--accent)}
+.btn-submit{width:100%;padding:12px;background:var(--accent);color:var(--bg);border-radius:var(--radius-sm);font-size:.9rem;font-weight:600;transition:var(--transition);margin-top:8px}
+.btn-submit:hover{background:var(--accent-light)}
+.login-guest{text-align:center;margin-top:16px;font-size:.8rem;color:var(--text-muted)}
+.login-guest a{color:var(--accent);cursor:pointer}
+.login-close{position:absolute;top:16px;right:16px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-muted);transition:var(--transition);font-size:1.1rem}
+.login-close:hover{background:var(--bg-hover);color:var(--text)}
+
+/* ═══ NUDGE BANNER ═══ */
+.nudge-banner{margin:0 28px 0;padding:14px 20px;background:linear-gradient(135deg,var(--accent-soft),rgba(201,168,76,.04));border:1px solid rgba(201,168,76,.18);border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;gap:12px;animation:slideUp .4s ease}
+.nudge-text{font-size:.82rem;color:var(--text-secondary);line-height:1.4}
+.nudge-text strong{color:var(--accent)}
+.nudge-actions{display:flex;gap:8px;flex-shrink:0}
+.nudge-btn{padding:7px 16px;border-radius:var(--radius-sm);font-size:.78rem;font-weight:600;transition:var(--transition)}
+.nudge-btn-primary{background:var(--accent);color:var(--bg)}
+.nudge-btn-primary:hover{background:var(--accent-light)}
+.nudge-btn-dismiss{color:var(--text-muted)}
+.nudge-btn-dismiss:hover{color:var(--text)}
+
+/* ═══ CHAT VIEW ═══ */
+.chat-container{display:flex;height:100%;overflow:hidden}
+.chat-main{flex:1;display:flex;flex-direction:column}
+.chat-header{padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.chat-header-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent-dim));border-radius:10px;display:flex;align-items:center;justify-content:center}
+.chat-header-text h2{font-family:var(--font-display);font-size:1.15rem;font-weight:600}
+.chat-header-text p{font-size:.72rem;color:var(--text-muted)}
+.chat-messages{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:20px}
+.chat-welcome{text-align:center;padding:80px 20px 40px;max-width:560px;margin:auto}
+.chat-welcome h2{font-family:var(--font-display);font-size:2rem;font-weight:600;margin-bottom:8px}
+.chat-welcome p{color:var(--text-secondary);font-size:.92rem;margin-bottom:28px;line-height:1.6}
+.suggestion-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.suggestion-chip{padding:8px 16px;background:var(--bg-surface);border:1px solid var(--border);border-radius:20px;font-size:.8rem;color:var(--text-secondary);transition:var(--transition);cursor:pointer}
+.suggestion-chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.msg{display:flex;gap:12px;max-width:85%;animation:msgIn .35s ease}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600}
+.msg.ai .msg-avatar{background:linear-gradient(135deg,var(--accent),var(--accent-dim));color:var(--bg)}
+.msg.user .msg-avatar{background:var(--bg-elevated);color:var(--text-secondary)}
+.msg-body{padding:14px 18px;border-radius:var(--radius-lg);font-size:.88rem;line-height:1.65}
+.msg.ai .msg-body{background:var(--bg-surface);border:1px solid var(--border)}
+.msg.user .msg-body{background:var(--accent-glow);border:1px solid rgba(201,168,76,.2)}
+.msg-body .source-ref{display:inline-block;background:var(--accent-soft);color:var(--accent);padding:1px 7px;border-radius:4px;font-size:.76rem;font-weight:500;margin:0 2px}
+.msg-sources{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.msg-sources-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:6px}
+.msg-source-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:4px;font-size:.78rem;color:var(--text-secondary);cursor:pointer;transition:var(--transition)}
+.msg-source-item:hover{background:var(--bg-hover);color:var(--text)}
+.typing-indicator{display:flex;gap:4px;padding:14px 18px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:fit-content;animation:msgIn .35s ease}
+.typing-dot{width:7px;height:7px;background:var(--text-muted);border-radius:50%;animation:typingBounce 1.4s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+.chat-input-area{padding:16px 28px 20px;border-top:1px solid var(--border);background:var(--bg-surface)}
+.chat-input-row{display:flex;gap:10px;align-items:flex-end}
+.chat-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;font-size:.88rem;color:var(--text);resize:none;min-height:44px;max-height:120px;line-height:1.5;transition:border-color .2s}
+.chat-input:focus{border-color:var(--accent-dim)}
+.chat-input::placeholder{color:var(--text-muted)}
+.chat-send{width:42px;height:42px;background:var(--accent);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;transition:var(--transition);flex-shrink:0}
+.chat-send:hover{background:var(--accent-light);transform:scale(1.05)}
+.chat-send svg{color:var(--bg);width:18px;height:18px}
+.sources-panel{width:280px;border-left:1px solid var(--border);background:var(--bg-surface);padding:20px;overflow-y:auto;display:flex;flex-direction:column}
+.sources-panel h3{font-family:var(--font-display);font-size:1rem;font-weight:600;margin-bottom:16px;color:var(--text-secondary)}
+.source-card{padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;transition:var(--transition);cursor:pointer}
+.source-card:hover{border-color:var(--accent-dim)}
+.source-card-type{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:600;margin-bottom:4px}
+.source-card-title{font-size:.82rem;font-weight:500;margin-bottom:4px}
+.source-card-meta{font-size:.7rem;color:var(--text-muted)}
+.source-card-relevance{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.68rem;color:var(--text-muted)}
+.relevance-bar{flex:1;height:3px;background:var(--bg-hover);border-radius:2px;overflow:hidden}
+.relevance-fill{height:100%;background:var(--accent);border-radius:2px}
+
+/* ═══ DASHBOARD VIEW ═══ */
+.dash-header{margin-bottom:28px}
+.dash-header h1{font-family:var(--font-display);font-size:2.2rem;font-weight:600;margin-bottom:6px}
+.dash-header p{color:var(--text-secondary);font-size:.92rem}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 20px;transition:var(--transition)}
+.stat-card:hover{border-color:var(--border-light);transform:translateY(-2px)}
+.stat-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px}
+.stat-value{font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--text)}
+.stat-change{font-size:.72rem;margin-top:6px;font-weight:500}
+.stat-change.up{color:var(--success)}
+.dash-tabs{display:flex;gap:4px;background:var(--bg-surface);padding:4px;border-radius:var(--radius);width:fit-content;margin-bottom:24px}
+.dash-tab{padding:8px 18px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:500;color:var(--text-muted);transition:var(--transition);cursor:pointer}
+.dash-tab.active{background:var(--bg-hover);color:var(--text)}
+.dash-section{display:none}
+.dash-section.active{display:block}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.section-header h3{font-family:var(--font-display);font-size:1.2rem;font-weight:600}
+.section-link{font-size:.78rem;color:var(--accent);cursor:pointer;font-weight:500}
+.section-link:hover{text-decoration:underline}
+.learning-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.learning-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;transition:var(--transition);cursor:pointer}
+.learning-card:hover{border-color:var(--border-light);transform:translateY(-2px)}
+.learning-card-title{font-size:.92rem;font-weight:600;margin-bottom:6px}
+.learning-card-meta{font-size:.72rem;color:var(--text-muted);margin-bottom:12px;display:flex;gap:12px}
+.progress-bar{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent-dim),var(--accent));transition:width 1.2s ease}
+.progress-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted)}
+.btn-sm{padding:7px 16px;border-radius:var(--radius-sm);font-size:.78rem;font-weight:600;transition:var(--transition)}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-light)}
+.btn-secondary{background:var(--bg-elevated);border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:var(--border-light)}
+.query-list{display:flex;flex-direction:column;gap:10px}
+.query-item{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;transition:var(--transition);cursor:pointer;display:flex;align-items:center;gap:14px}
+.query-item:hover{border-color:var(--border-light)}
+.query-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem}
+.query-text{flex:1}
+.query-title{font-size:.86rem;font-weight:500;margin-bottom:2px}
+.query-meta{font-size:.7rem;color:var(--text-muted)}
+.query-time{font-size:.7rem;color:var(--text-muted);flex-shrink:0}
+.activity-list{display:flex;flex-direction:column;gap:2px}
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--radius);transition:var(--transition)}
+.activity-item:hover{background:var(--bg-surface)}
+.activity-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.activity-text{font-size:.84rem;color:var(--text-secondary);line-height:1.5}
+.activity-text strong{color:var(--text);font-weight:500}
+.activity-time{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+.ld-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.ld-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:var(--transition);cursor:pointer}
+.ld-card:hover{border-color:var(--border-light);transform:translateY(-2px)}
+.ld-banner{height:80px;position:relative;display:flex;align-items:flex-end;padding:14px 18px}
+.ld-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,var(--bg-surface))}
+.ld-banner.b1{background:linear-gradient(135deg,#1a1040,#2d1840,#0a1628)}
+.ld-banner.b2{background:linear-gradient(135deg,#0a1e1a,#1a2e10,#0a1428)}
+.ld-banner.b3{background:linear-gradient(135deg,#1e1a0a,#2e1010,#140a28)}
+.ld-banner-title{position:relative;z-index:1;font-family:var(--font-display);font-size:1.1rem;font-weight:700}
+.ld-body{padding:16px 18px}
+.ld-desc{font-size:.82rem;color:var(--text-secondary);line-height:1.5;margin-bottom:12px}
+.ld-meta{display:flex;gap:14px;font-size:.72rem;color:var(--text-muted)}
+.ld-status{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.68rem;font-weight:600;margin-top:10px}
+.ld-status.in-progress{background:var(--accent-soft);color:var(--accent)}
+.ld-status.new{background:rgba(96,165,250,.1);color:var(--info)}
+.ld-status.completed{background:rgba(74,222,128,.1);color:var(--success)}
+
+/* ═══ COMMUNITY VIEW ═══ */
+.community-header{margin-bottom:24px}
+.community-header h1{font-family:var(--font-display);font-size:2rem;font-weight:600;margin-bottom:4px}
+.community-header p{color:var(--text-secondary);font-size:.9rem}
+.community-filter{display:flex;gap:4px;background:var(--bg-surface);padding:4px;border-radius:var(--radius);width:fit-content;margin-bottom:20px}
+.community-filter-tab{padding:8px 18px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:var(--transition)}
+.community-filter-tab.active{background:var(--bg-hover);color:var(--text)}
+.community-groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:28px}
+.cg-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;transition:var(--transition);cursor:pointer;position:relative;overflow:hidden}
+.cg-card:hover{border-color:var(--border-light);transform:translateY(-2px)}
+.cg-card.locked{opacity:.75}
+.cg-card.locked:hover{opacity:1}
+.cg-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;font-size:.65rem;font-weight:600;margin-bottom:10px}
+.cg-badge.open{background:rgba(74,222,128,.1);color:var(--success)}
+.cg-badge.closed{background:rgba(248,113,113,.1);color:var(--danger)}
+.cg-name{font-size:.95rem;font-weight:600;margin-bottom:6px}
+.cg-desc{font-size:.8rem;color:var(--text-secondary);line-height:1.5;margin-bottom:12px}
+.cg-meta{display:flex;gap:14px;font-size:.72rem;color:var(--text-muted)}
+.cg-lock-overlay{position:absolute;inset:0;background:rgba(10,10,12,.75);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;transition:opacity .3s ease;border-radius:var(--radius-lg)}
+.cg-card.locked:hover .cg-lock-overlay{opacity:1}
+.cg-lock-icon{font-size:1.6rem}
+.cg-lock-text{font-size:.82rem;font-weight:500;color:var(--text)}
+.cg-lock-btn{padding:7px 18px;background:var(--accent);color:var(--bg);border-radius:var(--radius-sm);font-size:.78rem;font-weight:600;transition:var(--transition)}
+.cg-lock-btn:hover{background:var(--accent-light)}
+.thread-list{display:flex;flex-direction:column;gap:10px}
+.thread-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;transition:var(--transition);cursor:pointer}
+.thread-card:hover{border-color:var(--border-light)}
+.thread-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.thread-author{display:flex;align-items:center;gap:10px}
+.thread-avatar{width:30px;height:30px;border-radius:50%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:600;color:var(--text-secondary)}
+.thread-author-name{font-size:.82rem;font-weight:500}
+.thread-author-role{font-size:.68rem;color:var(--text-muted)}
+.thread-tag{padding:3px 10px;border-radius:12px;font-size:.65rem;font-weight:600}
+.thread-tag.insight{background:rgba(201,168,76,.1);color:var(--accent)}
+.thread-tag.question{background:rgba(96,165,250,.1);color:var(--info)}
+.thread-tag.discussion{background:rgba(74,222,128,.1);color:var(--success)}
+.thread-title{font-size:.95rem;font-weight:600;margin-bottom:6px}
+.thread-excerpt{font-size:.82rem;color:var(--text-secondary);line-height:1.5;margin-bottom:10px}
+.thread-stats{display:flex;gap:16px;font-size:.72rem;color:var(--text-muted)}
+.thread-stat{display:flex;align-items:center;gap:4px}
+.featured-insight{background:linear-gradient(135deg,var(--accent-soft),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.2);border-radius:var(--radius-lg);padding:24px;margin-bottom:20px}
+.featured-insight .fi-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:10px}
+.featured-insight .fi-text{font-family:var(--font-display);font-size:1.15rem;font-weight:500;line-height:1.5;font-style:italic;margin-bottom:10px}
+.featured-insight .fi-author{font-size:.78rem;color:var(--text-muted)}
+.community-locked-banner{background:var(--bg-surface);border:1px solid rgba(248,113,113,.2);border-radius:var(--radius-lg);padding:20px 24px;display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.community-locked-banner .clb-icon{font-size:1.4rem}
+.community-locked-banner .clb-text{flex:1}
+.community-locked-banner .clb-text h4{font-size:.88rem;font-weight:600;margin-bottom:2px}
+.community-locked-banner .clb-text p{font-size:.78rem;color:var(--text-muted)}
+.community-locked-banner .clb-btn{padding:8px 18px;background:var(--accent);color:var(--bg);border-radius:var(--radius-sm);font-size:.8rem;font-weight:600;transition:var(--transition);flex-shrink:0}
+.community-locked-banner .clb-btn:hover{background:var(--accent-light)}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.animate-in{animation:slideUp .5s ease forwards}
+.stagger-1{animation-delay:.1s;opacity:0}
+.stagger-2{animation-delay:.2s;opacity:0}
+.stagger-3{animation-delay:.3s;opacity:0}
+.stagger-4{animation-delay:.4s;opacity:0}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">N</div>
+    <div class="brand-text">NitinSeth<span>.AI</span></div>
+  </div>
+
+  <!-- LOGGED OUT NAV -->
+  <div id="navLoggedOut" class="sidebar-section" style="flex:1;display:flex;flex-direction:column">
+    <div class="sidebar-label">Navigate</div>
+    <div class="nav-item active" data-view="chat" onclick="App.navigate('chat')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      AI Assistant
+    </div>
+    <div class="nav-item" data-view="community" onclick="App.navigate('community')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Community
+    </div>
+  </div>
+
+  <!-- LOGGED IN NAV -->
+  <div id="navLoggedIn" class="sidebar-section hidden" style="flex:1;display:flex;flex-direction:column">
+    <div class="sidebar-label">Navigate</div>
+    <div class="nav-item active" data-view="dashboard" onclick="App.navigate('dashboard')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" data-view="chat" onclick="App.navigate('chat')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      AI Assistant
+    </div>
+    <div class="nav-item" data-view="community" onclick="App.navigate('community')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Community
+    </div>
+  </div>
+
+  <!-- FOOTER: LOGIN / USER -->
+  <div class="sidebar-footer">
+    <div id="footerLoggedOut">
+      <button class="btn-login" onclick="App.auth.showLogin()">Sign In / Sign Up</button>
+    </div>
+    <div id="footerLoggedIn" class="hidden">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">AS</div>
+        <div>
+          <div class="user-name" id="userName">Amit Sharma</div>
+          <div class="user-role" id="userRole">Professional</div>
+        </div>
+      </div>
+      <div class="btn-logout" onclick="App.auth.logout()">Sign Out</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="main-content">
+
+    <!-- ─── AI ASSISTANT (default view) ─── -->
+    <div class="view active" id="view-chat" style="padding:0">
+      <div class="chat-container">
+        <div class="chat-main">
+          <div class="chat-header">
+            <div class="chat-header-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="chat-header-text">
+              <h2>Nitin Seth AI Assistant</h2>
+              <p id="chatSubtitle">Ask anything about Nitin's ideas, frameworks, and books</p>
+            </div>
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-welcome" id="chatWelcome">
+              <h2>What would you like to explore?</h2>
+              <p>Ask about Nitin Seth's frameworks, ideas, books, or any topic he's written or spoken about. I'll provide sourced, contextual answers.</p>
+              <div class="suggestion-chips" id="suggestionChips">
+                <div class="suggestion-chip" onclick="App.chat.send(this.textContent)">What is the Analogous framework?</div>
+                <div class="suggestion-chip" onclick="App.chat.send(this.textContent)">How does Incedo build its culture?</div>
+                <div class="suggestion-chip" onclick="App.chat.send(this.textContent)">What are the Three Horizons of AI adoption?</div>
+                <div class="suggestion-chip" onclick="App.chat.send(this.textContent)">How should CXOs approach digital transformation?</div>
+              </div>
+            </div>
+          </div>
+          <div id="nudgeArea"></div>
+          <div class="chat-input-area">
+            <div class="chat-input-row">
+              <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask anything about Nitin's ideas, frameworks, or books..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();App.chat.send()}"></textarea>
+              <button class="chat-send" onclick="App.chat.send()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="sources-panel" id="sourcesPanel">
+          <h3>Sources</h3>
+          <p style="font-size:.8rem;color:var(--text-muted);line-height:1.5">Sources will appear here as the assistant references Nitin's work.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── DASHBOARD (logged in only) ─── -->
+    <div class="view" id="view-dashboard">
+      <div class="view-pad">
+        <div class="dash-header animate-in">
+          <h1>Welcome back, <span id="dashUserName">Amit</span></h1>
+          <p id="dashSubtitle">Your intellectual ecosystem at a glance</p>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card animate-in stagger-1">
+            <div class="stat-label">Conversations</div>
+            <div class="stat-value">47</div>
+            <div class="stat-change up">+12 this week</div>
+          </div>
+          <div class="stat-card animate-in stagger-2">
+            <div class="stat-label">Frameworks Explored</div>
+            <div class="stat-value">8</div>
+            <div class="stat-change up">+2 new</div>
+          </div>
+          <div class="stat-card animate-in stagger-3">
+            <div class="stat-label">Learning Progress</div>
+            <div class="stat-value">62%</div>
+            <div class="stat-change up">On track</div>
+          </div>
+          <div class="stat-card animate-in stagger-4">
+            <div class="stat-label">Community Rank</div>
+            <div class="stat-value">#34</div>
+            <div class="stat-change up">↑ 8 positions</div>
+          </div>
+        </div>
+        <div class="dash-tabs" id="dashTabs">
+          <div class="dash-tab active" onclick="App.dashboard.switchTab('overview',this)">Overview</div>
+          <div class="dash-tab" id="tabLearning" onclick="App.dashboard.switchTab('learning',this)">My Learning</div>
+          <div class="dash-tab" id="tabQueries" onclick="App.dashboard.switchTab('queries',this)">My Queries</div>
+          <div class="dash-tab" onclick="App.dashboard.switchTab('ld',this)">L&D</div>
+          <div class="dash-tab" onclick="App.dashboard.switchTab('history',this)">History</div>
+        </div>
+
+        <!-- OVERVIEW -->
+        <div class="dash-section active" id="sec-overview">
+          <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:24px">
+            <div>
+              <div class="section-header">
+                <h3>Continue Learning</h3>
+                <span class="section-link" onclick="App.dashboard.switchTab('learning',document.getElementById('tabLearning'))">View All →</span>
+              </div>
+              <div class="learning-cards" id="overviewLearning"></div>
+            </div>
+            <div>
+              <div class="section-header">
+                <h3>Recent Activity</h3>
+                <span class="section-link" onclick="App.dashboard.switchTab('history',document.querySelector('.dash-tab:last-child'))">View All →</span>
+              </div>
+              <div class="activity-list" id="overviewActivity"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MY LEARNING -->
+        <div class="dash-section" id="sec-learning">
+          <div class="section-header"><h3>My Learning</h3></div>
+          <div class="learning-cards" id="learningCards"></div>
+        </div>
+
+        <!-- MY QUERIES -->
+        <div class="dash-section" id="sec-queries">
+          <div class="section-header"><h3>My Queries</h3><span class="section-link" onclick="App.navigate('chat')">New Query →</span></div>
+          <div class="query-list" id="queryList"></div>
+        </div>
+
+        <!-- L&D -->
+        <div class="dash-section" id="sec-ld">
+          <div class="section-header"><h3>Learning & Development Journeys</h3></div>
+          <div class="ld-grid" id="ldGrid"></div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="dash-section" id="sec-history">
+          <div class="section-header"><h3>Activity History</h3></div>
+          <div class="activity-list" id="historyList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── COMMUNITY ─── -->
+    <div class="view" id="view-community">
+      <div class="view-pad">
+        <div class="community-header">
+          <h1>Community</h1>
+          <p>Learn together — insights, discussions, and shared applications</p>
+        </div>
+        <div id="communityLockedBanner"></div>
+        <div class="community-filter">
+          <div class="community-filter-tab active" onclick="App.community.filter('all',this)">All</div>
+          <div class="community-filter-tab" onclick="App.community.filter('open',this)">Open</div>
+          <div class="community-filter-tab" onclick="App.community.filter('closed',this)">Closed</div>
+        </div>
+        <div class="community-groups" id="communityGroups"></div>
+        <div class="section-header" style="margin-top:8px"><h3>Recent Discussions</h3></div>
+        <div id="communityThreads"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ═══ LOGIN MODAL ═══ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-modal">
+    <div class="login-close" onclick="App.auth.hideLogin()">✕</div>
+    <h2>Welcome to NitinSeth.AI</h2>
+    <p class="login-sub">Sign in to save progress, join communities, and unlock personalized learning.</p>
+    <div class="login-role-tabs">
+      <div class="login-role-tab active" onclick="App.auth.selectRole('professional',this)">Professional</div>
+      <div class="login-role-tab" onclick="App.auth.selectRole('student',this)">Student</div>
+    </div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@company.com">
+    </div>
+    <div class="login-field">
+      <label>Organization</label>
+      <input type="text" id="loginOrg" placeholder="Your company or university">
+    </div>
+    <button class="btn-submit" onclick="App.auth.login()">Continue</button>
+    <div class="login-guest">Prefer to explore? <a onclick="App.auth.hideLogin()">Continue as Guest</a></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// APP CONTROLLER
+// ══════════════════════════════════════════════════════════════
+const App = {
+  state: {
+    loggedIn: false,
+    role: 'professional',
+    currentView: 'chat',
+    nudgeDismissed: false,
+    messageCount: 0
+  },
+
+  init() {
+    this.navigate('chat');
+  },
+
+  navigate(view) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const viewEl = document.getElementById('view-' + view);
+    const navEl = document.querySelector(`.nav-item[data-view="${view}"]`);
+    if (viewEl) viewEl.classList.add('active');
+    if (navEl) navEl.classList.add('active');
+    this.state.currentView = view;
+    if (view === 'dashboard') this.dashboard.render();
+    if (view === 'community') this.community.render();
+  },
+
+  // ═══ AUTH ═══
+  auth: {
+    selectedRole: 'professional',
+
+    showLogin() {
+      document.getElementById('loginOverlay').classList.add('show');
+    },
+
+    hideLogin() {
+      document.getElementById('loginOverlay').classList.remove('show');
+    },
+
+    selectRole(role, el) {
+      this.selectedRole = role;
+      document.querySelectorAll('.login-role-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    },
+
+    login() {
+      App.state.loggedIn = true;
+      App.state.role = this.selectedRole;
+      App.state.nudgeDismissed = true;
+
+      // Remove nudge if visible
+      document.getElementById('nudgeArea').innerHTML = '';
+
+      // Update sidebar
+      document.getElementById('navLoggedOut').classList.add('hidden');
+      document.getElementById('navLoggedIn').classList.remove('hidden');
+      document.getElementById('navLoggedIn').style.display = 'flex';
+      document.getElementById('footerLoggedOut').classList.add('hidden');
+      document.getElementById('footerLoggedIn').classList.remove('hidden');
+
+      // Set user info
+      const email = document.getElementById('loginEmail').value || 'amit@example.com';
+      const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      document.getElementById('userName').textContent = name;
+      document.getElementById('userAvatar').textContent = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+      const roleLabels = { professional: 'Professional', student: 'Student' };
+      document.getElementById('userRole').textContent = roleLabels[App.state.role] || 'Member';
+      document.getElementById('dashUserName').textContent = name.split(' ')[0];
+
+      // Update dashboard subtitle
+      document.getElementById('dashSubtitle').textContent =
+        App.state.role === 'student'
+          ? 'Your learning journey and academic progress'
+          : 'Your intellectual ecosystem at a glance';
+
+      // Update chat subtitle
+      document.getElementById('chatSubtitle').textContent = 'Trained on all of Nitin\'s books, talks, and frameworks — personalized for you';
+
+      // Update suggestion chips for logged-in state
+      const chips = App.state.role === 'student'
+        ? ['Explain the Three Horizons with examples','What is the Analogous framework?','Give me a case study on digital transformation','How does Nitin define organizational excellence?']
+        : ['What is the Analogous framework?','How does Incedo build its culture?','What are the Three Horizons of AI adoption?','How should CXOs approach digital transformation?'];
+      document.getElementById('suggestionChips').innerHTML = chips.map(c =>
+        `<div class="suggestion-chip" onclick="App.chat.send(this.textContent)">${c}</div>`
+      ).join('');
+
+      // Show/hide dashboard tabs based on role
+      if (App.state.role === 'student') {
+        document.getElementById('tabLearning').style.display = '';
+        document.getElementById('tabQueries').style.display = 'none';
+      } else {
+        document.getElementById('tabLearning').style.display = 'none';
+        document.getElementById('tabQueries').style.display = '';
+      }
+
+      // Navigate to dashboard
+      this.hideLogin();
+      App.navigate('dashboard');
+    },
+
+    logout() {
+      App.state.loggedIn = false;
+      App.state.role = 'professional';
+      App.state.nudgeDismissed = false;
+      App.state.messageCount = 0;
+
+      // Update sidebar
+      document.getElementById('navLoggedIn').classList.add('hidden');
+      document.getElementById('navLoggedIn').style.display = '';
+      document.getElementById('navLoggedOut').classList.remove('hidden');
+      document.getElementById('footerLoggedIn').classList.add('hidden');
+      document.getElementById('footerLoggedOut').classList.remove('hidden');
+
+      // Update chat subtitle
+      document.getElementById('chatSubtitle').textContent = 'Ask anything about Nitin\'s ideas, frameworks, and books';
+
+      // Reset suggestion chips
+      document.getElementById('suggestionChips').innerHTML = [
+        'What is the Analogous framework?','How does Incedo build its culture?',
+        'What are the Three Horizons of AI adoption?','How should CXOs approach digital transformation?'
+      ].map(c => `<div class="suggestion-chip" onclick="App.chat.send(this.textContent)">${c}</div>`).join('');
+
+      App.navigate('chat');
+    }
+  },
+
+  // ═══ CHAT ═══
+  chat: {
+    messages: [],
+    isTyping: false,
+
+    send(text) {
+      const input = document.getElementById('chatInput');
+      const msg = text || input.value.trim();
+      if (!msg || this.isTyping) return;
+      input.value = '';
+      input.style.height = 'auto';
+
+      document.getElementById('chatWelcome').style.display = 'none';
+      this.messages.push({ role: 'user', content: msg });
+      this.render();
+
+      this.isTyping = true;
+      this.renderTyping();
+
+      const response = this.generateResponse(msg);
+      App.state.messageCount++;
+
+      setTimeout(() => {
+        this.isTyping = false;
+        this.messages.push({ role: 'ai', content: response.text, sources: response.sources });
+        this.render();
+        this.renderSources(response.sources);
+
+        // Show nudge after first AI response if not logged in
+        if (!App.state.loggedIn && !App.state.nudgeDismissed && App.state.messageCount >= 1) {
+          this.showNudge();
+        }
+      }, 1200 + Math.random() * 800);
+    },
+
+    showNudge() {
+      const area = document.getElementById('nudgeArea');
+      if (area.querySelector('.nudge-banner')) return;
+      area.innerHTML = `
+        <div class="nudge-banner">
+          <div class="nudge-text"><strong>Save your progress</strong> — Sign in to track learning, join communities, and get personalized insights.</div>
+          <div class="nudge-actions">
+            <button class="nudge-btn nudge-btn-primary" onclick="App.auth.showLogin()">Sign In</button>
+            <button class="nudge-btn nudge-btn-dismiss" onclick="App.chat.dismissNudge()">✕</button>
+          </div>
+        </div>`;
+    },
+
+    dismissNudge() {
+      App.state.nudgeDismissed = true;
+      document.getElementById('nudgeArea').innerHTML = '';
+    },
+
+    render() {
+      const container = document.getElementById('chatMessages');
+      const welcome = document.getElementById('chatWelcome');
+      let html = '';
+      if (welcome) html += welcome.outerHTML;
+      this.messages.forEach(m => {
+        if (m.role === 'user') {
+          html += `<div class="msg user"><div class="msg-avatar">${App.state.loggedIn ? 'AS' : 'G'}</div><div class="msg-body">${this.escapeHtml(m.content)}</div></div>`;
+        } else {
+          let sourcesHtml = '';
+          if (m.sources && m.sources.length) {
+            sourcesHtml = `<div class="msg-sources"><div class="msg-sources-label">Referenced Sources</div>${m.sources.map(s => `<div class="msg-source-item"><span style="font-size:.7rem;color:var(--accent)">📄</span>${s.title}</div>`).join('')}</div>`;
+          }
+          html += `<div class="msg ai"><div class="msg-avatar">NS</div><div class="msg-body">${m.content}${sourcesHtml}</div></div>`;
+        }
+      });
+      container.innerHTML = html;
+      container.scrollTop = container.scrollHeight;
+    },
+
+    renderTyping() {
+      const container = document.getElementById('chatMessages');
+      const el = document.createElement('div');
+      el.className = 'msg ai';
+      el.id = 'typingIndicator';
+      el.innerHTML = `<div class="msg-avatar">NS</div><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+      container.appendChild(el);
+      container.scrollTop = container.scrollHeight;
+    },
+
+    renderSources(sources) {
+      const panel = document.getElementById('sourcesPanel');
+      if (!sources || !sources.length) return;
+      panel.innerHTML = `<h3>Sources</h3>` + sources.map(s => `
+        <div class="source-card">
+          <div class="source-card-type">${s.type}</div>
+          <div class="source-card-title">${s.title}</div>
+          <div class="source-card-meta">${s.meta}</div>
+          <div class="source-card-relevance"><span>Relevance</span><div class="relevance-bar"><div class="relevance-fill" style="width:${s.relevance}%"></div></div><span>${s.relevance}%</span></div>
+        </div>
+      `).join('');
+    },
+
+    escapeHtml(text) {
+      const d = document.createElement('div');
+      d.textContent = text;
+      return d.innerHTML;
+    },
+
+    generateResponse(query) {
+      const q = query.toLowerCase();
+      const responses = [
+        {
+          keywords: ['analogous', 'analogous model', 'analogous framework'],
+          text: `The <strong>Analogous Framework</strong> is one of Nitin Seth's most significant contributions, detailed in his book <span class="source-ref">Analogous</span>.<br><br>The core premise: building a world-class organization is <em>analogous</em> to building a world-class nation. Five key pillars:<br><br><strong>1. Constitution &amp; Values</strong> — Foundational beliefs guiding every decision.<br><strong>2. Meritocracy &amp; Talent</strong> — Systems where the best ideas win regardless of hierarchy.<br><strong>3. Institutional Strength</strong> — Processes that outlast any individual.<br><strong>4. Culture of Execution</strong> — Operational discipline as a cultural value.<br><strong>5. Purpose &amp; Identity</strong> — A shared narrative giving meaning to the work.`,
+          sources: [
+            { type: 'Book', title: 'Analogous: Building a World-Class Organization', meta: 'Chapters 2–5', relevance: 97 },
+            { type: 'Talk', title: 'TiE Global Summit 2024 — Keynote', meta: 'January 2024, Delhi', relevance: 85 },
+            { type: 'Article', title: 'Why Organizations Should Think Like Nations', meta: 'LinkedIn, March 2024', relevance: 78 }
+          ]
+        },
+        {
+          keywords: ['culture', 'incedo culture', 'build culture', 'incedo build'],
+          text: `Nitin's perspective: culture is the <strong>operating system</strong> of the organization. At Incedo, culture is built through five deliberate mechanisms:<br><br><strong>1. Codified Values</strong> — Embedded in hiring, reviews, and promotions.<br><strong>2. Radical Transparency</strong> — Leaders share context, not just decisions.<br><strong>3. Meritocratic Practices</strong> — Structured evaluations ensure fairness.<br><strong>4. Founder-Led Rituals</strong> — Town halls and culture conversations.<br><strong>5. Culture Add over Culture Fit</strong> — Hiring for new perspectives with shared values.<br><br><em>"Strategy can be copied. Culture cannot."</em>`,
+          sources: [
+            { type: 'Book', title: 'Analogous', meta: 'Chapter 6: Culture as Operating System', relevance: 95 },
+            { type: 'Talk', title: 'NASSCOM Technology & Leadership Forum 2024', meta: 'Panel: Building Culture at Scale', relevance: 76 }
+          ]
+        },
+        {
+          keywords: ['three horizons', 'horizon', 'ai adoption', 'ai horizons'],
+          text: `Nitin's <strong>Three Horizons of AI Adoption</strong> framework:<br><br><strong>Horizon 1: Efficiency (Now–12 months)</strong> — AI for existing tasks, faster and cheaper.<br><br><strong>Horizon 2: Effectiveness (12–36 months)</strong> — AI-augmented decision-making, redesigned workflows. Requires organizational change.<br><br><strong>Horizon 3: Transformation (36+ months)</strong> — Entirely new business models, products, and markets.<br><br>Key insight: most enterprises get stuck in Horizon 1. The bottleneck is <strong>leadership readiness</strong> and <strong>organizational culture</strong>.<br><br><em>"AI is not a technology problem. It's a leadership problem."</em>`,
+          sources: [
+            { type: 'Talk', title: 'AI & The Future of Leadership — Keynote', meta: 'Incedo Leadership Summit, 2024', relevance: 96 },
+            { type: 'Book', title: 'In the Age of AI (forthcoming)', meta: 'Draft chapters', relevance: 90 }
+          ]
+        },
+        {
+          keywords: ['cxo', 'digital transformation', 'ceo', 'cto', 'leader', 'leadership', 'approach'],
+          text: `Nitin's counsel to CXOs: most digital transformations fail due to <strong>leadership and organizational inertia</strong>, not technology.<br><br><strong>1. Start with "Why"</strong> — Articulate clear business outcomes before selecting technology.<br><strong>2. CEO as Chief Transformation Officer</strong> — Cannot be delegated.<br><strong>3. Build the Muscle Before the Marathon</strong> — Small, high-visibility wins first.<br><strong>4. Invest in People</strong> — Biggest ROI comes from upskilling, not software.<br><strong>5. Culture of Experimentation</strong> — Failure must be safe.`,
+          sources: [
+            { type: 'Book', title: 'Analogous', meta: 'Chapter 9: Execution in the Digital Age', relevance: 92 },
+            { type: 'Talk', title: 'Economic Times Global Business Summit', meta: '2024, Fireside Chat', relevance: 88 }
+          ]
+        },
+        {
+          keywords: ['meritocracy', 'meritocratic', 'talent', 'hiring'],
+          text: `Meritocracy is the idea Nitin is most passionate about. Key points:<br><br><strong>Meritocracy ≠ Elitism</strong> — About fairness, not privilege.<br><strong>Systems, Not Intentions</strong> — Structured evaluations, calibration sessions, transparent criteria.<br><strong>"Disagree and Commit"</strong> — Open disagreement, full commitment after decision.<br><br><em>"The moment politics trumps merit, you've begun your decline."</em>`,
+          sources: [
+            { type: 'Book', title: 'Analogous', meta: 'Chapter 3: The Meritocratic Organization', relevance: 98 },
+            { type: 'Talk', title: 'People Matters TechHR 2024', meta: 'Keynote: Building Meritocracies at Scale', relevance: 87 }
+          ]
+        },
+        {
+          keywords: ['india', 'india potential', 'growth'],
+          text: `Nitin's structural analysis of India's potential:<br><br><strong>1. Talent Density</strong> — India produces engineers comfortable with ambiguity — critical for the AI age.<br><strong>2. Services-to-Products Transition</strong> — Building for the "next billion users."<br><strong>3. AI as Equalizer</strong> — Small teams can now build what required massive R&D budgets.<br><strong>4. The Leadership Gap</strong> — India needs leaders who build institutions, not just run services.<br><br><em>"India doesn't need more startups. India needs more institutions."</em>`,
+          sources: [
+            { type: 'Book', title: 'Analogous', meta: 'Chapter 1: Why India, Why Now', relevance: 94 },
+            { type: 'Talk', title: 'TiE Delhi NCR — Annual Keynote', meta: '2024', relevance: 91 }
+          ]
+        }
+      ];
+
+      let match = null, maxScore = 0;
+      responses.forEach(r => {
+        let score = 0;
+        r.keywords.forEach(kw => { if (q.includes(kw)) score += kw.length; });
+        if (score > maxScore) { maxScore = score; match = r; }
+      });
+
+      if (!match) {
+        return {
+          text: `That's a thoughtful question. Based on Nitin Seth's body of work, his thinking spans organizational excellence, AI-driven transformation, leadership philosophy, and India's growth story.<br><br>Could you narrow your question? Try asking about:<br>• The <strong>Analogous Framework</strong> for building organizations<br>• <strong>Three Horizons</strong> of AI adoption<br>• Building a <strong>meritocratic culture</strong><br>• <strong>CXO approaches</strong> to digital transformation<br>• <strong>India's potential</strong> in the AI age`,
+          sources: [
+            { type: 'Book', title: 'Analogous: Building a World-Class Organization', meta: 'Full text available', relevance: 70 },
+            { type: 'Talk', title: 'Nitin Seth — Keynotes Collection', meta: '2023–2024', relevance: 65 }
+          ]
+        };
+      }
+      return match;
+    }
+  },
+
+  // ═══ DASHBOARD ═══
+  dashboard: {
+    currentTab: 'overview',
+
+    render() {
+      this.renderOverview();
+      this.renderLearning();
+      this.renderQueries();
+      this.renderLD();
+      this.renderHistory();
+      this.switchTab(this.currentTab, document.querySelector('.dash-tab.active'));
+    },
+
+    switchTab(tab, el) {
+      this.currentTab = tab;
+      document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.dash-section').forEach(s => s.classList.remove('active'));
+      if (el) el.classList.add('active');
+      const sec = document.getElementById('sec-' + tab);
+      if (sec) sec.classList.add('active');
+    },
+
+    renderOverview() {
+      // Continue Learning
+      const learnData = [
+        { title: 'Incedo Leadership Foundations', progress: 62, meta: 'Module 3 of 6' },
+        { title: 'The Analogous Masterclass', progress: 15, meta: 'Module 1 of 8' }
+      ];
+      document.getElementById('overviewLearning').innerHTML = learnData.map(l => `
+        <div class="learning-card">
+          <div class="learning-card-title">${l.title}</div>
+          <div class="learning-card-meta">${l.meta}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${l.progress}%"></div></div>
+          <div class="progress-label"><span>${l.progress}% complete</span></div>
+          <button class="btn-sm btn-primary" style="margin-top:10px">Continue →</button>
+        </div>
+      `).join('');
+
+      // Recent Activity
+      const activities = [
+        { text: '<strong>AI Chat</strong> — Discussed the Three Horizons framework', time: '2 hours ago', color: 'var(--accent)' },
+        { text: '<strong>Quiz completed</strong> — Module 3: Building High-Performance Teams', time: 'Yesterday', color: 'var(--success)' },
+        { text: '<strong>Community</strong> — Posted an insight on the Analogous model', time: '2 days ago', color: 'var(--info)' },
+        { text: '<strong>L&D</strong> — Started "AI Readiness for Leaders" journey', time: '4 days ago', color: 'var(--warning)' }
+      ];
+      document.getElementById('overviewActivity').innerHTML = activities.map(a => `
+        <div class="activity-item"><div class="activity-dot" style="background:${a.color}"></div><div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div></div>
+      `).join('');
+    },
+
+    renderLearning() {
+      const courses = [
+        { title: 'Incedo Leadership Foundations', progress: 62, modules: '3/6 modules', duration: '4 weeks', status: 'In Progress' },
+        { title: 'The Analogous Masterclass', progress: 15, modules: '1/8 modules', duration: '6 weeks', status: 'In Progress' },
+        { title: 'Building Meritocratic Organizations', progress: 30, modules: '1/4 modules', duration: '2 weeks', status: 'In Progress' },
+        { title: 'AI Readiness for Leaders', progress: 100, modules: '5/5 modules', duration: '3 weeks', status: 'Completed' }
+      ];
+      document.getElementById('learningCards').innerHTML = courses.map(c => `
+        <div class="learning-card">
+          <div class="learning-card-title">${c.title}</div>
+          <div class="learning-card-meta"><span>${c.modules}</span><span>${c.duration}</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%"></div></div>
+          <div class="progress-label"><span>${c.progress}% complete</span><span style="color:${c.progress===100?'var(--success)':'var(--accent)'}">${c.status}</span></div>
+          <button class="btn-sm ${c.progress===100?'btn-secondary':'btn-primary'}" style="margin-top:10px">${c.progress===100?'Review':'Continue'} →</button>
+        </div>
+      `).join('');
+    },
+
+    renderQueries() {
+      const queries = [
+        { icon: '💬', title: 'What is the Analogous framework?', topic: 'Organizational Excellence', time: '2 hours ago' },
+        { icon: '💬', title: 'How should CXOs approach digital transformation?', topic: 'Leadership', time: 'Yesterday' },
+        { icon: '💬', title: 'Three Horizons of AI adoption explained', topic: 'AI Strategy', time: '2 days ago' },
+        { icon: '💬', title: 'Meritocracy in practice at Incedo', topic: 'Culture', time: '4 days ago' },
+        { icon: '💬', title: "India's potential in the AI age", topic: 'India Growth', time: '1 week ago' }
+      ];
+      document.getElementById('queryList').innerHTML = queries.map(q => `
+        <div class="query-item">
+          <div class="query-icon">${q.icon}</div>
+          <div class="query-text"><div class="query-title">${q.title}</div><div class="query-meta">${q.topic}</div></div>
+          <div class="query-time">${q.time}</div>
+        </div>
+      `).join('');
+    },
+
+    renderLD() {
+      const journeys = [
+        { title: 'Leadership Foundations', desc: 'Master the core philosophy behind Incedo\'s operating model.', modules: 6, duration: '4 weeks', learners: 847, status: 'in-progress', banner: 'b1' },
+        { title: 'Analogous Masterclass', desc: 'Deep dive into the Analogous framework for organizational excellence.', modules: 8, duration: '6 weeks', learners: 1243, status: 'new', banner: 'b2' },
+        { title: 'AI Readiness', desc: 'Navigate the Three Horizons of AI adoption for CXOs.', modules: 5, duration: '3 weeks', learners: 632, status: 'completed', banner: 'b3' },
+        { title: 'Meritocratic Orgs', desc: 'Systems and cultural practices for creating true meritocracies.', modules: 4, duration: '2 weeks', learners: 415, status: 'in-progress', banner: 'b1' }
+      ];
+      document.getElementById('ldGrid').innerHTML = journeys.map(j => `
+        <div class="ld-card">
+          <div class="ld-banner ${j.banner}"><div class="ld-banner-title">${j.title}</div></div>
+          <div class="ld-body">
+            <div class="ld-desc">${j.desc}</div>
+            <div class="ld-meta"><span>📚 ${j.modules} modules</span><span>⏱ ${j.duration}</span><span>👥 ${j.learners.toLocaleString()}</span></div>
+            <span class="ld-status ${j.status}">${j.status === 'in-progress' ? '● In Progress' : j.status === 'new' ? '○ New' : '✓ Completed'}</span>
+          </div>
+        </div>
+      `).join('');
+    },
+
+    renderHistory() {
+      const history = [
+        { text: '<strong>AI Chat</strong> — Discussed the Three Horizons framework', time: '2 hours ago', color: 'var(--accent)' },
+        { text: '<strong>Quiz completed</strong> — Module 3: Building High-Performance Teams', time: 'Yesterday', color: 'var(--success)' },
+        { text: '<strong>Community</strong> — Posted an insight on applying the Analogous model', time: '2 days ago', color: 'var(--info)' },
+        { text: '<strong>L&D</strong> — Started "AI Readiness for Leaders" journey', time: '4 days ago', color: 'var(--warning)' },
+        { text: '<strong>AI Chat</strong> — Explored meritocracy in Indian IT companies', time: '5 days ago', color: 'var(--accent)' },
+        { text: '<strong>Community</strong> — Replied to thread on digital transformation', time: '6 days ago', color: 'var(--info)' },
+        { text: '<strong>Quiz completed</strong> — Module 2: Constitution & Values', time: '1 week ago', color: 'var(--success)' },
+        { text: '<strong>L&D</strong> — Completed "Incedo Leadership Foundations" Module 2', time: '1 week ago', color: 'var(--warning)' }
+      ];
+      document.getElementById('historyList').innerHTML = history.map(a => `
+        <div class="activity-item"><div class="activity-dot" style="background:${a.color}"></div><div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div></div>
+      `).join('');
+    }
+  },
+
+  // ═══ COMMUNITY ═══
+  community: {
+    groups: [
+      { id: 1, name: 'Leadership & Strategy', desc: 'Discussions on organizational excellence, strategy execution, and leadership frameworks from Nitin\'s work.', members: 2840, threads: 156, access: 'open' },
+      { id: 2, name: 'AI & Digital Transformation', desc: 'Exploring the Three Horizons framework, enterprise AI adoption, and digital-first operating models.', members: 1920, threads: 98, access: 'open' },
+      { id: 3, name: 'Framework Practitioners', desc: 'Real-world applications of the Analogous model. Share case studies, ask questions, learn from peers.', members: 1450, threads: 72, access: 'open' },
+      { id: 4, name: 'Incedo Internal', desc: 'Private community for Incedo employees. Culture deep-dives, leadership Q&A, internal case studies.', members: 3200, threads: 234, access: 'closed' },
+      { id: 5, name: 'Academic Partners', desc: 'Faculty and students from partner institutions. Course materials, research discussions, and guest lectures.', members: 680, threads: 45, access: 'closed' },
+      { id: 6, name: 'CXO Roundtable', desc: 'Invite-only community for senior leaders. Candid discussions on transformation challenges and leadership.', members: 120, threads: 28, access: 'closed' }
+    ],
+
+    threads: [
+      { author: 'Priya Malhotra', initials: 'PM', role: 'VP Engineering, Incedo', tag: 'insight', title: 'How we applied the Analogous model to restructure our delivery org', excerpt: 'After reading Chapter 5, we realized our team structure was optimized for hierarchy, not merit. Here\'s what we changed...', replies: 23, upvotes: 87, time: '3 days ago', group: 'Framework Practitioners', groupAccess: 'open' },
+      { author: 'Rajesh Kumar', initials: 'RK', role: 'Student, IIT Delhi', tag: 'question', title: 'Difference between Horizon 1 and Horizon 2 in practice?', excerpt: 'I understand the concept theoretically, but how do you know your org has moved from Horizon 1 to Horizon 2?', replies: 12, upvotes: 34, time: '1 day ago', group: 'AI & Digital Transformation', groupAccess: 'open' },
+      { author: 'Sneha Iyer', initials: 'SI', role: 'CHRO, Tech Mahindra', tag: 'discussion', title: 'Meritocracy in legacy organizations — is it possible?', excerpt: 'Nitin\'s framework assumes building from scratch. What about 30-year-old companies with embedded hierarchies?', replies: 31, upvotes: 62, time: '5 days ago', group: 'Leadership & Strategy', groupAccess: 'open' },
+      { author: 'Arjun Patel', initials: 'AP', role: 'Product Manager, Incedo', tag: 'insight', title: 'Using the Three Horizons to prioritize our AI investments', excerpt: 'We mapped 14 AI initiatives to the three horizons and realized 11 were Horizon 1. Here\'s how we rebalanced...', replies: 18, upvotes: 55, time: '2 days ago', group: 'Incedo Internal', groupAccess: 'closed' },
+      { author: 'Dr. Meera Singh', initials: 'MS', role: 'Faculty, XLRI', tag: 'question', title: 'Case studies on the Analogous framework for my MBA class', excerpt: 'I\'m designing a module around Nitin\'s work and need real-world examples. Any suggestions?', replies: 8, upvotes: 29, time: '4 days ago', group: 'Academic Partners', groupAccess: 'closed' }
+    ],
+
+    render(filter) {
+      const f = filter || 'all';
+
+      // Locked banner for non-logged-in users
+      const bannerEl = document.getElementById('communityLockedBanner');
+      if (!App.state.loggedIn) {
+        bannerEl.innerHTML = `
+          <div class="community-locked-banner">
+            <div class="clb-icon">🔒</div>
+            <div class="clb-text"><h4>Some communities require sign-in</h4><p>Join closed communities for exclusive discussions, internal case studies, and direct Q&A with Nitin.</p></div>
+            <button class="clb-btn" onclick="App.auth.showLogin()">Sign In to Unlock</button>
+          </div>`;
+      } else {
+        bannerEl.innerHTML = '';
+      }
+
+      // Community groups
+      const groupsEl = document.getElementById('communityGroups');
+      const filteredGroups = f === 'all' ? this.groups : this.groups.filter(g => g.access === f);
+      groupsEl.innerHTML = filteredGroups.map(g => {
+        const isLocked = g.access === 'closed' && !App.state.loggedIn;
+        return `
+          <div class="cg-card ${isLocked ? 'locked' : ''}" onclick="${isLocked ? 'App.auth.showLogin()' : ''}">
+            <span class="cg-badge ${g.access}">${g.access === 'open' ? '● Open' : '🔒 Closed'}</span>
+            <div class="cg-name">${g.name}</div>
+            <div class="cg-desc">${g.desc}</div>
+            <div class="cg-meta"><span>👥 ${g.members.toLocaleString()} members</span><span>💬 ${g.threads} threads</span></div>
+            ${isLocked ? `<div class="cg-lock-overlay"><div class="cg-lock-icon">🔒</div><div class="cg-lock-text">Sign in to join</div><button class="cg-lock-btn" onclick="event.stopPropagation();App.auth.showLogin()">Unlock</button></div>` : ''}
+          </div>`;
+      }).join('');
+
+      // Threads
+      const threadsEl = document.getElementById('communityThreads');
+      const filteredThreads = f === 'all' ? this.threads
+        : f === 'open' ? this.threads.filter(t => t.groupAccess === 'open')
+        : this.threads.filter(t => t.groupAccess === 'closed');
+
+      threadsEl.innerHTML = `
+        <div class="featured-insight">
+          <div class="fi-label">⭐ Featured Insight</div>
+          <div class="fi-text">"The most powerful thing about the Analogous framework isn't the analogy itself — it's that it forces you to think in systems."</div>
+          <div class="fi-author">— Priya Malhotra, VP Engineering at Incedo · 87 upvotes</div>
+        </div>
+        <div class="thread-list">
+          ${filteredThreads.map(t => {
+            const isLocked = t.groupAccess === 'closed' && !App.state.loggedIn;
+            return `
+              <div class="thread-card" style="${isLocked ? 'opacity:.6' : ''}" onclick="${isLocked ? 'App.auth.showLogin()' : ''}">
+                <div class="thread-card-top">
+                  <div class="thread-author">
+                    <div class="thread-avatar">${t.initials}</div>
+                    <div><div class="thread-author-name">${t.author}</div><div class="thread-author-role">${t.role}</div></div>
+                  </div>
+                  <span class="thread-tag ${t.tag}">${t.tag}</span>
+                </div>
+                <div class="thread-title">${t.title}</div>
+                <div class="thread-excerpt">${t.excerpt}</div>
+                <div class="thread-stats">
+                  <span class="thread-stat">💬 ${t.replies} replies</span>
+                  <span class="thread-stat">▲ ${t.upvotes} upvotes</span>
+                  <span class="thread-stat">🕐 ${t.time}</span>
+                  <span class="thread-stat" style="color:${t.groupAccess==='open'?'var(--success)':'var(--text-muted)'}">${t.groupAccess==='open'?'● Open':'🔒'} ${t.group}</span>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>`;
+    },
+
+    filter(type, el) {
+      document.querySelectorAll('.community-filter-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      this.render(type);
+    }
+  }
+};
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded', () => App.init());
+
+// Auto-resize chat input
+document.getElementById('chatInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+</script>
+</body>
+</html>
