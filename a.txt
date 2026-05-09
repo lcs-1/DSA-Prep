@@ -57,3 +57,12 @@
 │  │            │ │  Content)  │ │  Queues)   │ │                │   │
 │  └────────────┘ └────────────┘ └────────────┘ └────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
+
+start with AI assistant , answer form generic base.. soft nudge to login.. if he logs in , 
+ 
+sees dashboard, learning credits , conitune his course etc
+ 
+dashboard divided into multiple portions - learninns ( if student ), queries ( if general) , l&D, history 
+ 
+community ---> all communities, would be able to participate in open community question .. for closed communities, soft nude
+ 
